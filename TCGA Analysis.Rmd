@@ -21,14 +21,13 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
 library(Biobase)
 library(RTCGA)
 library(RTCGA.clinical) # survival times
-library(RTCGA.rnaseq) # genes' expression
+library(RTCGA.rnaseq) # gene expression
 library(genefu)
 library(graphite)
 library(igraph)
 
-my.wd <- "/Users/awhudson/Dropbox/MethodsResearch/QualitativeInteractions/Code/"
-setwd(my.wd)
-source('Method/RelativeDifferenceTest10-28.R')
+setwd("WORKING DIRECTORY HERE") # set working directory
+source('QualInt.R')
 ```
 
 ```{r PreProcess}
