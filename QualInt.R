@@ -1,6 +1,16 @@
 library(mvtnorm)
 library(expm)
 
+NaiveTest <- function(theta.hat, standard.error, alpha) {
+  sep.p.vals <- pchisq(theta.hat^2/standard.error^2, df = 1, lower.tail = FALSE)
+  p.val <- ifelse(((sep.p.vals[1] <  alpha) & (sep.p.vals[2] > alpha)) |
+                  ((sep.p.vals[1] >  alpha) & (sep.p.vals[2] < alpha)),
+                    0, 1)
+  # Test does not provide real p-values
+  # We set p.val = 0 for "reject" and p.val = 1 for "fail to reject"
+  return(p.val)
+}
+
 RelDifLRTStat <- function(theta.hat, standard.error, kappa = 2) {
   
   theta.hat.1 <- abs(theta.hat[1])
