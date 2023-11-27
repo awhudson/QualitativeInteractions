@@ -1,8 +1,6 @@
 set.seed(206)
 
-my.wd <- "/Users/awhudson/Dropbox/MethodsResearch/QualitativeInteractions/Code/"
-setwd(my.wd)
-source('Method/RelativeDifferenceTest-rev-su22.R')
+source('QualInt.R')
 
 ##########################################
 ### Simulation Settings
@@ -75,5 +73,4 @@ output = list(p.vals.RD = p.vals.RD, p.vals.OM = p.vals.OM, p.vals.NAIVE = p.val
 output = list(p.vals.RD = p.vals.RD, p.vals.OM = p.vals.OM, 
               p.vals.NAIVE = p.vals.NAIVE, p.vals.QUANT = p.vals.QUANT,
               kmax = kmax, n = n, kappa = kappa, theta.2 = theta.2)
-save(output,
-     file = "/Users/awhudson/Dropbox/MethodsResearch/QualitativeInteractions/Code/Sims-rev-su2022/sim_output.rda")
+save(output, file = "sim_output.rda")
