@@ -79,7 +79,7 @@ RelDifLRT <- function(theta.hat, standard.error, n, kappa = 2) {
   return(out)
 }
 
-kappa.max <- function(theta.hat, standard.error, n, alpha) {
+kappa.max <- function(theta.hat, standard.error, n, alpha, tol = .Machine$double.eps^0.25) {
   
   kappa.lower <- ifelse(RelDifLRT(theta.hat, standard.error, n, 1)$p.val < alpha, 1, NA)
   kappa.upper <- 4
@@ -88,7 +88,7 @@ kappa.max <- function(theta.hat, standard.error, n, alpha) {
   
   if(!is.na(kappa.lower)) {
     kappa.max <- uniroot(function(x) RelDifLRT(theta.hat, standard.error, n, x)$p.val - alpha,
-                         interval = c(kappa.lower, kappa.upper))$root
+                         interval = c(kappa.lower, kappa.upper), tol = tol)$root
   }
   else {
     kappa.max <- 1
