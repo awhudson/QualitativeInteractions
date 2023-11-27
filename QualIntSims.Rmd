@@ -1,7 +1,7 @@
 ---
 title: "Qualitative Interactions Simulations"
 author: "Aaron Hudson"
-date: "September 6, 2022"
+date: "Dec 13, 2022"
 output: pdf_document
 header-includes:
 - \usepackage{graphicx}
@@ -14,7 +14,7 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
                       cache = TRUE, results = 'hide')
-load("sim_output.rda")
+load("/Users/awhudson/Dropbox/MethodsResearch/QualitativeInteractions/Code/Sims-rev-su2022/sim_output.rda")
 library(latex2exp)
 
 alpha <- .05
@@ -24,6 +24,7 @@ theta.2 <- output$theta.2
 p.vals.RD <- output$p.vals.RD
 p.vals.OM <- output$p.vals.OM
 p.vals.NAIVE <- output$p.vals.NAIVE
+p.vals.QUANT <- output$p.vals.QUANT
 kmax <- output$kmax
 
 line2user <- function(line, side) {
@@ -44,31 +45,116 @@ reject.prob.OM <- apply(p.vals.OM, c(1, 2, 4),
                         function(x) mean(x < alpha))
 reject.prob.NAIVE <- apply(p.vals.NAIVE, c(1,2),
                            function(x) mean(x < alpha))
+reject.prob.QUANT <- apply(p.vals.QUANT, c(1,2),
+                           function(x) mean(x < alpha))
 kmax <- apply(kmax, c(1,2,3), function(x) ifelse(!is.na(x), x, 1))
 ```
 \setlength{\abovedisplayskip}{0pt}
 \setlength{\belowdisplayskip}{0pt}
 
 ```{r RelativeDifference}
-par(mfrow = c(1,2), pty = "s")
-layout(mat = matrix(c(1,2,3,3),nrow = 2,ncol = 2,byrow = TRUE),
-       heights = c(.4, .1))
+par(mfrow = c(1,2))
+layout(mat = matrix(c(1,2,3,4,5,6,7,7,7),nrow = 3,ncol = 3,byrow = TRUE),
+       heights = c(.25, .25, .25))
+par(mar = c(4,4,1,1))
 
-for(i in 1:2){
+for(i in 1:6){
   plot(theta.2, rep(0, length(theta.2)), type = "n",
        ylim = c(0,1), xlab = TeX("$\\theta_2$"), ylab = "Rejection Probability",
        main = paste0("n = ", n[i]), cex.axis = .9)
   rect(xleft = -1/kappa[1], xright = 1/kappa[1],
-       ybottom = -1, ytop = 2, col = "grey90", lty = 1, lwd = 1.5)
+       ybottom = -1, ytop = 2, col = "grey80", lty = 1, lwd = 1.5)
   rect(xleft = -1/kappa[2], xright = 1/kappa[2],
        ybottom = -1, ytop = 2, col = "grey65", lty = 1, lwd = 1.5)
-  abline(v = 0, lwd = 1.5, lty = 1)
-  abline(h = alpha, lty = 1, col = "red", lwd = 1.5)
+  rect(xleft = -1/kappa[3], xright = 1/kappa[3],
+       ybottom = -1, ytop = 2, col = "grey50", lty = 1, lwd = 1.5)
+  rect(xleft = -1/kappa[4], xright = 1/kappa[4],
+       ybottom = -1, ytop = 2, col = "grey35", lty = 1, lwd = 1.5)
+  abline(v = 0, lwd = 2.5, lty = 1, col = "white")
+  abline(h = alpha, lty = 1, col = "pink", lwd = 3)
 
   
-  lines(theta.2, reject.prob.RD[,i,1], col = "blue", lwd = 2, lty = 2)
-  lines(theta.2, reject.prob.RD[,i,2], col = "black", lwd = 2, lty = 3)
-  lines(theta.2, reject.prob.NAIVE[,i], col = "purple", lwd = 2, lty = 4)
+  lines(theta.2, reject.prob.RD[,i,1], col = "green", lwd = 2, lty = 2)
+  lines(theta.2, reject.prob.RD[,i,2], col = "gold", lwd = 2, lty = 2)
+   lines(theta.2, reject.prob.RD[,i,3], col = "orange", lwd = 2, lty = 2)
+  lines(theta.2, reject.prob.RD[,i,4], col = "red", lwd = 2, lty = 2)
+  lines(theta.2, reject.prob.NAIVE[,i], col = "purple", lwd = 2, lty = 2)
+  lines(theta.2, reject.prob.QUANT[,i], col = "blue", lwd = 2, lty = 2)
+  
+  # points(theta.2, reject.prob.RD[,i,1], col = "blue", cex = 1.375, pch = 21, bg = "white", lwd = 1.5)
+  # points(theta.2, reject.prob.RD[,i,2], col = "black", cex = 1.375, pch = 24, bg = "white", lwd = 1.5)
+  # points(theta.2, reject.prob.NAIVE[,i], col = "purple", cex = 1.375, pch = 22, bg = "white", lwd = 1.5)
+  box()
+}
+
+par(pty = "m")
+par(mar = c(2,.5,1,.5))
+plot(1, type = "n", axes=FALSE, xlab="", ylab="")
+# legend(x = "top",inset = 0,
+#        legend = c(TeX("$\\kappa = 2$"), TeX("$\\kappa = 4$"), "Naive"),
+#        # lty = c(1, 1, 1), lwd = c(2,2,2),
+#        lwd = 1.5,
+#        col = c("blue", "black", "purple"), horiz = TRUE,
+#        pch = c(21, 24, 22), bg = c("white", "white", "white"))
+# legend(x = "top",inset = 0,
+#        legend = c(TeX("$\\kappa = 1.5$"), TeX("$\\kappa = 2$"), TeX("$\\kappa = 4$"),
+#                   TeX("$\\kappa = 8$"), "Naive", "Quant."),
+#        # lty = c(1, 1, 1), lwd = c(2,2,2),
+#        lwd = 1.5, horiz = TRUE,
+#        col = c("green", "yellow", "orange", "red", "purple", "blue"), 
+#        lty = c(2, 2, 2, 2, 2, 2))
+legend(x = "top",inset = 0,
+       legend = c(TeX("$\\kappa = 1.5$"), 
+                  TeX("$\\theta_{\\max}/\\theta_{\\min} \\geq 1.5$"),
+                  TeX("$\\kappa = 2$"),
+                  TeX("$\\theta_{\\max}/\\theta_{\\min} \\geq 2$"),
+                  TeX("$\\kappa = 4$"),
+                  TeX("$\\theta_{\\max}/\\theta_{\\min} \\geq 4$"),
+                  TeX("$\\kappa = 8$"),
+                  TeX("$\\theta_{\\max}/\\theta_{\\min} \\geq 8$"),
+                  "Naive", " ", "Quant"),
+       # lty = c(1, 1, 1), lwd = c(2,2,2),
+       lwd = 1.5, horiz = FALSE,
+       col = c("green", NA, "gold", NA, "orange",
+               NA, "red", NA, "purple", NA, "blue", NA), 
+       lty = c(2, NA, 2, NA, 2, NA, 2, NA, 2, NA, 2, NA),
+       # fill = c(NA, "grey90", NA, "grey65", NA, "grey45",
+       #          NA, "grey20", NA, NA, NA),
+       pch = c(NA, 22, NA, 22, NA, 22, NA, 22, NA, NA, NA),
+       pt.bg = c(NA, "grey80", NA, "grey65", NA, "grey50",
+                NA, "grey35", NA, NA, NA),
+       pt.cex = 2,
+       ncol = 6,
+       cex = .9)
+```
+
+```{r Omnibus}
+par(mfrow = c(1,2))
+layout(mat = matrix(c(1,2,3,4,5,6,7,7,7),nrow = 3,ncol = 3,byrow = TRUE),
+       heights = c(.25, .25, .25))
+par(mar = c(4,4,1,1))
+for(i in 1:6){
+  plot(theta.2, rep(0, length(theta.2)), type = "n",
+       ylim = c(0,1), xlab = TeX("$\\theta_2$"), ylab = "Rejection Probability",
+       main = paste0("n = ", n[i]), cex.axis = .9)
+  rect(xleft = -1, xright = 1/kappa[1],
+       ybottom = -1, ytop = 2, col = "grey80", lty = 1, lwd = 1.5)
+  rect(xleft = -1, xright = 1/kappa[2],
+       ybottom = -1, ytop = 2, col = "grey65", lty = 1, lwd = 1.5)
+  rect(xleft = -1, xright = 1/kappa[3],
+       ybottom = -1, ytop = 2, col = "grey50", lty = 1, lwd = 1.5)
+  rect(xleft = -1, xright = 1/kappa[4],
+       ybottom = -1, ytop = 2, col = "grey35", lty = 1, lwd = 1.5)
+  # abline(v = 0, lwd = 1.5, lty = 1, col = "white")
+  abline(h = alpha, lty = 1, col = "pink", lwd = 3)
+
+  
+  lines(theta.2, reject.prob.OM[,i,1], col = "green", lwd = 2, lty = 2)
+  lines(theta.2, reject.prob.OM[,i,2], col = "gold", lwd = 2, lty = 2)
+   lines(theta.2, reject.prob.OM[,i,3], col = "orange", lwd = 2, lty = 2)
+  lines(theta.2, reject.prob.OM[,i,4], col = "red", lwd = 2, lty = 2)
+  # lines(theta.2, reject.prob.NAIVE[,i], col = "purple", lwd = 2, lty = 6)
+  lines(theta.2, reject.prob.QUANT[,i], col = "blue", lwd = 2, lty = 2)
   
   # points(theta.2, reject.prob.RD[,i,1], col = "blue", cex = 1.375, pch = 21, bg = "white", lwd = 1.5)
   # points(theta.2, reject.prob.RD[,i,2], col = "black", cex = 1.375, pch = 24, bg = "white", lwd = 1.5)
@@ -86,106 +172,97 @@ plot(1, type = "n", axes=FALSE, xlab="", ylab="")
 #        col = c("blue", "black", "purple"), horiz = TRUE,
 #        pch = c(21, 24, 22), bg = c("white", "white", "white"))
 legend(x = "top",inset = 0,
-       legend = c(TeX("$\\kappa = 2$"), TeX("$\\kappa = 4$"), "Naive"),
+       legend = c(TeX("$\\kappa = 1.5$"), 
+                  TeX("$\\theta_{1} \\geq 1.5 \\times \\theta_2$"),
+                  TeX("$\\kappa = 2$"),
+                  TeX("$\\theta_{1} \\geq 2 \\times \\theta_2$"),
+                  TeX("$\\kappa = 4$"),
+                  TeX("$\\theta_{1} \\geq 4 \\times \\theta_2$"),
+                  TeX("$\\kappa = 8$"),
+                  TeX("$\\theta_{1} \\geq 8 \\times \\theta_2$"),
+                  "Quant."),
        # lty = c(1, 1, 1), lwd = c(2,2,2),
-       lwd = 1.5, horiz = TRUE,
-       col = c("blue", "black", "purple"), lty = c(2, 3, 4))
-```
-
-```{r Omnibus}
-par(mfrow = c(1,2), pty = "s")
-layout(mat = matrix(c(1,2,3,3),nrow = 2,ncol = 2,byrow = TRUE),
-       heights = c(.4, .1))
-
-for(i in 1:2){
-  plot(theta.2, rep(0, length(theta.2)), type = "n",
-       ylim = c(0,1), xlab = TeX("$\\theta_2$"), ylab = "Rejection Probability",
-       main = paste0("N = ", n[i]), cex.axis = .9)
-  rect(xleft = -1, xright = 1/kappa[1],
-       ybottom = -1, ytop = 2, col = "grey97", lty = 2)
-  rect(xleft = -1, xright = 1/kappa[2],
-       ybottom = -1, ytop = 2, col = "grey92", lty = 2)
-  lines(theta.2, reject.prob.OM[,i,1], col = "blue", lwd = 3)
-  lines(theta.2, reject.prob.OM[,i,2], col = "black", lwd = 3)
-  lines(theta.2, reject.prob.NAIVE[,i], col = "purple", lwd = 3)
-  abline(h = alpha, lty = 2, col = "red")
-  box()
-}
-
-par(pty = "m")
-par(mar = c(2,2,1,1))
-plot(1, type = "n", axes=FALSE, xlab="", ylab="")
-legend(x = "top",inset = 0,
-       legend = c(TeX("$\\kappa = 2$"), TeX("$\\kappa = 4$"), "Quant."),
-       lty = c(1, 1, 1), lwd = c(2,2,2), col = c("blue", "black", "purple"), horiz = TRUE)
+       lwd = 1.5, horiz = FALSE,
+       col = c("green", NA, "gold", NA, "orange",
+               NA, "red", NA, "blue"), 
+       lty = c(2, NA, 2, NA, 2, NA, 2, NA, 2),
+       # fill = c(NA, "grey90", NA, "grey65", NA, "grey45",
+       #          NA, "grey20", NA),
+       pch = c(NA, 22, NA, 22, NA, 22, NA, 22, NA),
+       pt.bg = c(NA, "grey80", NA, "grey65", NA, "grey50",
+                NA, "grey35", NA),
+       pt.cex = 2,
+       ncol = 5)
 ```
 
 ```{r Joint}
-par(mgp=c(2.15,1,0), mar = c(3,3,4,2), mfrow = c(2,2))
-layout(mat = matrix(c(1,2,3,4,5,5),nrow = 3,ncol = 2,byrow = TRUE),
-       heights = c(.4, .4, .2))
-
-for(i in 1:2){
-  plot(theta.2, rep(0, length(theta.2)), type = "n",
-       ylim = c(0,1), xlab = TeX("$\\theta_2$"), ylab = "Rejection Probability",
-       cex.axis = .9)
-  rect(xleft = -1/kappa[1], xright = 1/kappa[1],
-       ybottom = -1, ytop = 2, col = "grey97", lty = 2)
-  rect(xleft = -1/kappa[2], xright = 1/kappa[2],
-       ybottom = -1, ytop = 2, col = "grey92", lty = 2)
-  lines(theta.2, reject.prob.RD[,i,1], col = "blue", lwd = 2)
-  lines(theta.2, reject.prob.RD[,i,2], col = "black", lwd = 2)
-  lines(theta.2, reject.prob.NAIVE[,i], col = "purple", lwd = 2)
-  abline(h = alpha, lty = 2, col = "red", lwd = 2)
-  box()
-  mtext(paste0("n = ", n[i]), line = 0.5, side = 3)
-}
-mtext("Relative Difference Test", line=-2, side=3, outer=TRUE,
-      cex=1.2, font = 2)
-# text(line2user(line=mean(par('mar')[c(2, 4)]), side=2), 
-#      line2user(line=2, side=3), 'First title', xpd=NA, cex=2, font=2)
-
-for(i in 1:2){
-  plot(theta.2, rep(0, length(theta.2)), type = "n",
-       ylim = c(0,1), xlab = TeX("$\\theta_2$"), ylab = "Rejection Probability",
-       cex.axis = .9)
-  rect(xleft = -1, xright = 1/kappa[1],
-       ybottom = -1, ytop = 2, col = "grey97", lty = 2)
-  rect(xleft = -1, xright = 1/kappa[2],
-       ybottom = -1, ytop = 2, col = "grey92", lty = 2)
-  lines(theta.2, reject.prob.OM[,i,1], col = "blue", lwd = 2)
-  lines(theta.2, reject.prob.OM[,i,2], col = "black", lwd = 2)
-  lines(theta.2, reject.prob.NAIVE[,i], col = "purple", lwd = 2)
-  abline(h = alpha, lty = 2, col = "red", lwd = 2)
-  box()
-  mtext(paste0("n = ", n[i]), line = 0.5, side = 3)
-}
-mtext("Omnibus Test", line=-15.5, side=3, outer=TRUE,
-      cex=1.2, font = 2)
-# text(line2user(line=mean(par('mar')[c(2, 4)]), side=2), 
-#      line2user(line=2, side=3), 'First title', xpd=NA, cex=2, font=2)
-
-
-par(pty = "m")
-par(mar = c(2,2,1,1))
-plot(1, type = "n", axes=FALSE, xlab="", ylab="")
-legend(x = "top",inset = 0,
-       legend = c(TeX("$\\kappa = 2$"), TeX("$\\kappa = 4$"), "Quant."),
-       lty = c(1, 1, 1), lwd = c(2, 2, 2), col = c("blue", "black", "purple"), horiz = TRUE)
+# par(mgp=c(2.15,1,0), mar = c(3,3,4,2), mfrow = c(2,2))
+# layout(mat = matrix(c(1,2,3,4,5,5),nrow = 3,ncol = 2,byrow = TRUE),
+#        heights = c(.4, .4, .2))
+# 
+# for(i in 1:2){
+#   plot(theta.2, rep(0, length(theta.2)), type = "n",
+#        ylim = c(0,1), xlab = TeX("$\\theta_2$"), ylab = "Rejection Probability",
+#        cex.axis = .9)
+#   rect(xleft = -1/kappa[1], xright = 1/kappa[1],
+#        ybottom = -1, ytop = 2, col = "grey97", lty = 2)
+#   rect(xleft = -1/kappa[2], xright = 1/kappa[2],
+#        ybottom = -1, ytop = 2, col = "grey92", lty = 2)
+#   lines(theta.2, reject.prob.RD[,i,1], col = "blue", lwd = 2)
+#   lines(theta.2, reject.prob.RD[,i,2], col = "black", lwd = 2)
+#   lines(theta.2, reject.prob.NAIVE[,i], col = "purple", lwd = 2)
+#   abline(h = alpha, lty = 2, col = "red", lwd = 2)
+#   box()
+#   mtext(paste0("n = ", n[i]), line = 0.5, side = 3)
+# }
+# mtext("Relative Difference Test", line=-2, side=3, outer=TRUE,
+#       cex=1.2, font = 2)
+# # text(line2user(line=mean(par('mar')[c(2, 4)]), side=2), 
+# #      line2user(line=2, side=3), 'First title', xpd=NA, cex=2, font=2)
+# 
+# for(i in 1:2){
+#   plot(theta.2, rep(0, length(theta.2)), type = "n",
+#        ylim = c(0,1), xlab = TeX("$\\theta_2$"), ylab = "Rejection Probability",
+#        cex.axis = .9)
+#   rect(xleft = -1, xright = 1/kappa[1],
+#        ybottom = -1, ytop = 2, col = "grey97", lty = 2)
+#   rect(xleft = -1, xright = 1/kappa[2],
+#        ybottom = -1, ytop = 2, col = "grey92", lty = 2)
+#   lines(theta.2, reject.prob.OM[,i,1], col = "blue", lwd = 2)
+#   lines(theta.2, reject.prob.OM[,i,2], col = "black", lwd = 2)
+#   lines(theta.2, reject.prob.NAIVE[,i], col = "purple", lwd = 2)
+#   abline(h = alpha, lty = 2, col = "red", lwd = 2)
+#   box()
+#   mtext(paste0("n = ", n[i]), line = 0.5, side = 3)
+# }
+# mtext("Omnibus Test", line=-15.5, side=3, outer=TRUE,
+#       cex=1.2, font = 2)
+# # text(line2user(line=mean(par('mar')[c(2, 4)]), side=2), 
+# #      line2user(line=2, side=3), 'First title', xpd=NA, cex=2, font=2)
+# 
+# 
+# par(pty = "m")
+# par(mar = c(2,2,1,1))
+# plot(1, type = "n", axes=FALSE, xlab="", ylab="")
+# legend(x = "top",inset = 0,
+#        legend = c(TeX("$\\kappa = 2$"), TeX("$\\kappa = 4$"), "Quant."),
+#        lty = c(1, 1, 1), lwd = c(2, 2, 2), col = c("blue", "black", "purple"), horiz = TRUE)
 ```
 
 ```{r KappaMax}
 par(mfrow = c(1,2), pty = "s")
+layout(mat = matrix(c(1,2,3,4,5,6,7,7,7),nrow = 2,ncol = 3,byrow = TRUE),
+       heights = c(.25, .25))
 
-for(i in 1:2){
+for(i in 1:6){
   kmax.q10 <- apply(kmax[, i,], 1, function(x) quantile(x, .05))
   kmax.q50 <- apply(kmax[, i,], 1, function(x) quantile(x, .5))
   kmax.q90 <- apply(kmax[, i,], 1, function(x) quantile(x, .95))
 
 
   plot(theta.2, rep(0, length(theta.2)), type = "n",
-         ylim = c(1,6), xlab = TeX("$\\theta_2$"), ylab = TeX("$\\kappa_{max}$"),
-         main = paste0("n = ", n[i]), cex.axis = .9, font.main = 1)
+         ylim = c(1,12), xlab = TeX("$\\theta_2$"), ylab = TeX("$\\kappa_{max}$"),
+         main = paste0("n = ", n[i]), cex.axis = .9)
   
   
   lines(theta.2, kmax.q10, lty = 2, lwd = 2, col = "blue")
