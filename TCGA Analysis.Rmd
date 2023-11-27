@@ -1,7 +1,7 @@
 ---
 title: "Qualitative Interactions: Data Analysis"
 author: "Aaron Hudson"
-date: "Dec 14, 2019"
+date: "Nov 26, 2023"
 output: pdf_document
 header-includes:
 - \usepackage{graphicx}
@@ -21,12 +21,13 @@ knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE,
 library(Biobase)
 library(RTCGA)
 library(RTCGA.clinical) # survival times
-library(RTCGA.rnaseq) # gene expression
+library(RTCGA.rnaseq) # genes' expression
 library(genefu)
 library(graphite)
 library(igraph)
+library(org.Hs.eg.db)
+library(xtable)
 
-setwd("WORKING DIRECTORY HERE") # set working directory
 source('QualInt.R')
 ```
 
@@ -109,33 +110,37 @@ Est.Neg <- cor(ER.Neg)
 SE.Neg <- (1 - Est.Neg^2)/sqrt(n.neg - 2)
 
 p.vals <- matrix(NA, p, p)
+kappas <- c(1.5, 2, 2.5, 3)
+p.vals <- array(NA, dim = c(p, p, length(kappas)))
 kmax <- matrix(NA, p, p)
 alpha <- .05
 for(i in 1:(p-1)) {
   for(j in (i+1):p) {
-    theta.hat <- c(Est.Plus[i,j], Est.Neg[i,j])
-    standard.error <- c(SE.Plus[i,j], SE.Neg[i,j])
-    p.vals[i,j] <- RelDifLRT(theta.hat, standard.error, n, kappa = 2)$p.val
-    kmax[i,j] <- kappa.max(theta.hat, standard.error, n, alpha)
-    
-    p.vals[j,i] <- p.vals[i,j]
-    kmax[j,i] <- kmax[i,j]
+    for(k in 1:length(kappas)) {
+      theta.hat <- c(Est.Plus[i,j], Est.Neg[i,j])
+      standard.error <- c(SE.Plus[i,j], SE.Neg[i,j])
+      p.vals[i,j,k] <- RelDifLRT(theta.hat, standard.error, n, kappa = kappas[k])$p.val
+      p.vals[j,i,k] <- p.vals[i,j,k]
+    }
   }
+  kmax[i,j] <- kappa.max(theta.hat, standard.error, n, alpha)
+  kmax[j,i] <- kmax[i,j]
 }
 ```
 
 ```{r Network2}
 ####################################
 ### 2B: Network Analysis: Plots
+### Primary -- kappa = 2
 ####################################
 set.seed(206)
 
-significant <- which(p.vals < .1/choose(p, 2), arr.ind = T)
-adj <- apply(p.vals, c(1,2), function(x) ifelse(x < .1/choose(p, 2), 1, 0))
+significant.kappa2 <- which(p.vals[,,2] < .05/choose(p, 2), arr.ind = T)
+adj <- apply(p.vals[,,2], c(1,2), function(x) ifelse(x < .05/choose(p, 2), 1, 0))
 adj.plus <- adj * apply(abs(Est.Plus)/abs(Est.Neg), c(1,2),
-                        function(x) ifelse(x > 2, 1, 0))
+                        function(x) ifelse(x > 1, 1, 0))
 adj.neg <- adj * apply(abs(Est.Neg)/abs(Est.Plus), c(1,2),
-                       function(x) ifelse(x > 2, 1, 0))
+                       function(x) ifelse(x > 1, 1, 0))
 
 diag(adj) <- 0
 
@@ -164,6 +169,36 @@ plot(net, vertex.shape="circle",
      vertex.label.color="black", vertex.frame.color = "white", 
      vertex.label.cex = .7, xlim  = c(.1, .5))
 ```
+
+```{r Network3, results='asis'}
+####################################
+### 2C: Network Analysis: Table
+### Secondary -- p-values
+####################################
+p.vals.temp <- p.vals
+p.vals.temp[cbind(t(combn(1:145, 2)), 2)] <- 1
+significant<- which(p.vals.temp[,,2] < .05/choose(p, 2), arr.ind = T)
+significant <- significant[order(significant[,1]),]
+
+tab.network <- cbind(p.vals[cbind(significant,1)],
+                     p.vals[cbind(significant,2)],
+                     p.vals[cbind(significant,3)],
+                     p.vals[cbind(significant,4)]) * choose(p, 2)
+tab.network <- apply(tab.network, c(1,2), function(x) min(c(x,1)))
+tab.network <- signif(tab.network, 2)
+
+tab.rownames <- paste0("(", colnames(ER.Plus)[significant[,1]], 
+                       ", ", colnames(ER.Neg)[significant[,2]], ")")
+tab.network <- cbind(tab.rownames, tab.network)
+tab.network <- rbind(c("Gene Pair","$\\kappa = 1.5$", "$\\kappa = 2$", "$\\kappa = 2.5$", "$\\kappa = 3$"),
+                     tab.network)
+
+print(xtable(tab.network[,-2]),
+      include.rowname = FALSE,
+      include.colname = FALSE,
+      sanitize.text.function = function(x) {x})
+```
+
 
 ```{r, results = 'asis'}
 # Number of deaths in each group:
@@ -195,39 +230,45 @@ plus.ses <- sapply(plus.models, function(x) summary(x)$coefficients[3])
 neg.hrs <- sapply(neg.models, function(x) summary(x)$coefficients[1])
 neg.ses <- sapply(neg.models, function(x) summary(x)$coefficients[3])
 
+alphas <- c(.1, .05, .025, .01)
 p <- length(KEGGgenes)
-kappa.surv <- numeric(p)
-for(j in 1:p) {
-  theta.hat <- c(plus.hrs[j], neg.hrs[j])
-  standard.error <- c(plus.ses[j], neg.ses[j])
-  n <- c(n.plus, n.neg)
-  kappa.surv[j] <- kappa.max(theta.hat,
-                             standard.error,
-                             n,
-                             alpha = .1)
+# kappa.surv <- numeric(p)
+kappa.surv <- matrix(NA, nrow = p, ncol = length(alphas))
+for(k in 1:length(alphas)) { 
+  for(j in 1:p) {
+    theta.hat <- c(plus.hrs[j], neg.hrs[j])
+    standard.error <- c(plus.ses[j], neg.ses[j])
+    n <- c(n.plus, n.neg)
+    kappa.surv[j,k] <- kappa.max(theta.hat,
+                                standard.error,
+                                n,
+                                alpha = alphas[k])
+  }
 }
+
+
 ```
 
 ```{r Biomarker2}
 ####################################
 ### 3B. Biomarker Analysis: Plots
 ####################################
-qual.ints <- which(kappa.surv > 1)
-plus.dots <- which(kappa.surv > 1 & (abs(plus.hrs) > abs(neg.hrs)))
-neg.dots <- which(kappa.surv > 1 & (abs(plus.hrs) < abs(neg.hrs)))
+qual.ints <- which(kappa.surv[,1] > 1)
+plus.dots <- which(kappa.surv[,1] > 1 & (abs(plus.hrs) > abs(neg.hrs)))
+neg.dots <- which(kappa.surv[,1] > 1 & (abs(plus.hrs) < abs(neg.hrs)))
 
 par(pty = "s")
 plot(plus.hrs, neg.hrs, xlim = c(-2.5, 2.5),
      ylim = c(-2.5, 2.5), pch = 16,
-     xlab = "ER+", ylab = "ER-")
+     xlab = "ER+", ylab = "ER-", col = "grey70")
 abline(v = 0, h = 0, lty = 2)
 points(plus.hrs[plus.dots], neg.hrs[plus.dots],
-       col = "orange", cex = 1.5, pch = 16)
+       col = "blue", cex = 1.625, pch = 18)
 points(plus.hrs[neg.dots], neg.hrs[neg.dots],
-       col = "green", cex = 1.5, pch = 16)
+       col = "red", cex = 1.5, pch = 17)
 
 
-abline(a = 0, b = 1, lty = 2, col = "gray")
+abline(a = 0, b = 1, lty = 2, col = "grey")
 ```
 
 ```{r Biomarker3, results='asis'}
@@ -241,13 +282,21 @@ tab <- data.frame(genes = KEGGgenes,
                   neg.hrs = paste0(round(neg.hrs, 2), " (",
                                    round(neg.ses, 2), ")"),
                   kappa = kappa.surv)
-tab <- tab[base::order(kappa.surv, decreasing = TRUE),]
-colnames(tab) <- c("Gene", 
-                   "ER+ Log HR (SE), SE", "ER- Log HR (SE)",
-                   "$\\kappa^{\\alpha}_{\\max}$")
+tab <- tab[base::order(kappa.surv[,1], decreasing = TRUE),]
+# colnames(tab) <- c("Gene", 
+#                    "ER+ Log HR (SE)", "ER- Log HR (SE)",
+#                    "$\\kappa^{\\alpha}_{\\max}$")
+
+addtorow <- list()
+addtorow$pos <- list(-1, 0)
+addtorow$command <- c(paste0(paste0('Gene & ER+ Log HR (SE) & ER- Log HR (SE) & \\multicolumn{4}{c}{', "$\\kappa^{\\alpha}_{\\max}$", '}'), '\\\\'),
+                      "& & & $\\alpha = .1$ & $\\alpha = .05$ & $\\alpha = .025$ & $\\alpha = .01$ \\\\")
+
 rownames(tab) <- NULL
-tab <- tab[sort(kappa.surv,decreasing = TRUE) > 1, ]
+tab <- tab[sort(kappa.surv[,1],decreasing = TRUE) > 1, ]
 print(xtable(tab),
       include.rowname = FALSE,
-      sanitize.text.function = function(x) {x})
+      include.colname = FALSE,
+      sanitize.text.function = function(x) {x},
+      add.to.row = addtorow)
 ```
